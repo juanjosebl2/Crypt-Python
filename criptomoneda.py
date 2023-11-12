@@ -86,7 +86,7 @@ def find_last_valid_prices(symbol, historical_prices):
     return last_valid_prices
 
 
-def imp_last_valid_prices_and_average_for_symbols(num_symbols=10):
+def imp_last_valid_prices_and_stats_for_symbols(num_symbols=10):
     all_symbols = get_all_symbols()
 
     # Asegurarse de que num_symbols no exceda la cantidad total de símbolos
@@ -96,6 +96,8 @@ def imp_last_valid_prices_and_average_for_symbols(num_symbols=10):
     last_symbols = all_symbols[-num_symbols:]
 
     total_percentage_change = 0
+    min_percentage_change = float('inf')  # Inicializar con un valor muy grande
+    max_percentage_change = float('-inf')  # Inicializar con un valor muy pequeño
 
     # Iterar sobre los últimos símbolos y obtener los precios históricos y último precio válido
     for symbol in last_symbols:
@@ -107,6 +109,11 @@ def imp_last_valid_prices_and_average_for_symbols(num_symbols=10):
             # Intentar obtener el porcentaje de cambio del resultado
             percentage_change_str = result.split("Cambio porcentual: ")[1]
             percentage_change = float(percentage_change_str[:-1])  # Eliminar el '%' al final
+
+            # Actualizar el mínimo y el máximo
+            min_percentage_change = min(min_percentage_change, percentage_change)
+            max_percentage_change = max(max_percentage_change, percentage_change)
+
             total_percentage_change += percentage_change
         except AttributeError as e:
             # Manejar la excepción si result es None
@@ -116,10 +123,12 @@ def imp_last_valid_prices_and_average_for_symbols(num_symbols=10):
         print(result)
         print('-' * 50)  # Separador para mayor claridad
 
-    # Calcular y mostrar la media de los porcentajes de cambio
+    # Calcular y mostrar la media, el mínimo y el máximo de los porcentajes de cambio
     if num_symbols > 0:
         average_percentage_change = total_percentage_change / num_symbols
         print(f"\nMedia de cambio porcentual para los últimos {num_symbols} símbolos: {average_percentage_change:.2f}%")
+        print(f"Porcentaje mínimo de cambio: {min_percentage_change:.2f}%")
+        print(f"Porcentaje máximo de cambio: {max_percentage_change:.2f}%")
 
 def filter_symbols_with_profit(num_symbols=10, porcentaje_minimo=50):
     all_symbols = get_all_symbols()
@@ -174,7 +183,7 @@ def info_symbol(symbol):
 #Coge n criptomonedas ultimamente sacadas y realiza un porentaje de perdida o ganancia el primer dia de lanzamiento
 # Llama a la función con manejo de excepciones
 try:
-    imp_last_valid_prices_and_average_for_symbols(num_symbols=20)
+    imp_last_valid_prices_and_stats_for_symbols(num_symbols=200)
 except Exception as e:
     print(f"Error general: {e}")
 
