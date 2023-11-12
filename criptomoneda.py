@@ -44,10 +44,13 @@ def get_historical_prices(symbol, start_date):
         date = datetime.utcfromtimestamp(timestamp / 1000).strftime('%Y-%m-%d')
         historical_prices[date] = {
             'open': float(kline[1]),    # Precio de apertura
-            'close': float(kline[4])    # Precio de cierre
+            'close': float(kline[4]),    # Precio de cierre
+            'high': float(kline[2]),    # Precio máximo
+            'low': float(kline[3])    # Precio mínimo
         }
 
     return historical_prices
+
 
 def find_last_valid_prices(symbol, historical_prices):
     today = datetime.now().date()
@@ -61,15 +64,27 @@ def find_last_valid_prices(symbol, historical_prices):
         if prices is not None:
             open_price = prices['open']
             close_price = prices['close']
+            high_price = prices['high']
+            low_price = prices['low']
             percentage_change = ((close_price - open_price) / open_price) * 100
+            percentage_change_hl = ((high_price - low_price) / low_price) * 100
 
-            last_valid_prices = f"El precio de {symbol} el {formatted_date} fue:\n- Apertura: {open_price}\n- Cierre: {close_price}\n- Cambio porcentual: {percentage_change:.2f}%"
+            last_valid_prices = (
+                f"El precio de \033[94m{symbol}\033[0m el \033[94m{formatted_date}\033[0m fue:\n"
+                f"- \033[92mApertura\033[0m: {open_price}\n"
+                f"- \033[91mCierre\033[0m: {close_price}\n"
+                f"- \033[92mMáximo\033[0m: {high_price}\n"
+                f"- \033[91mMínimo\033[0m: {low_price}\n"
+                f"Cambio porcentual: {percentage_change:.2f}%"
+            )
+            
         else:
             break
 
         date -= timedelta(days=1)
 
     return last_valid_prices
+
 
 def imp_last_valid_prices_and_average_for_symbols(num_symbols=10):
     all_symbols = get_all_symbols()
@@ -87,20 +102,24 @@ def imp_last_valid_prices_and_average_for_symbols(num_symbols=10):
         start_date = "2017-01-01"
         historical_prices = get_historical_prices(symbol, start_date)
         result = find_last_valid_prices(symbol, historical_prices)
+
+        try:
+            # Intentar obtener el porcentaje de cambio del resultado
+            percentage_change_str = result.split("Cambio porcentual: ")[1]
+            percentage_change = float(percentage_change_str[:-1])  # Eliminar el '%' al final
+            total_percentage_change += percentage_change
+        except AttributeError as e:
+            # Manejar la excepción si result es None
+            print(f"Error al procesar el símbolo {symbol}: {e}")
+            continue
+
         print(result)
-
-        # Obtener el porcentaje de cambio del resultado y sumarlo al total
-        percentage_change_str = result.split("Cambio porcentual: ")[1]
-        percentage_change = float(percentage_change_str[:-1])  # Eliminar el '%' al final
-        total_percentage_change += percentage_change
-
         print('-' * 50)  # Separador para mayor claridad
 
     # Calcular y mostrar la media de los porcentajes de cambio
     if num_symbols > 0:
         average_percentage_change = total_percentage_change / num_symbols
         print(f"\nMedia de cambio porcentual para los últimos {num_symbols} símbolos: {average_percentage_change:.2f}%")
-
 
 def filter_symbols_with_profit(num_symbols=10, porcentaje_minimo=50):
     all_symbols = get_all_symbols()
@@ -153,7 +172,11 @@ def info_symbol(symbol):
 #imp_all_symbols(num_symbols=10)  
 
 #Coge n criptomonedas ultimamente sacadas y realiza un porentaje de perdida o ganancia el primer dia de lanzamiento
-imp_last_valid_prices_and_average_for_symbols(num_symbols=100)
+# Llama a la función con manejo de excepciones
+try:
+    imp_last_valid_prices_and_average_for_symbols(num_symbols=20)
+except Exception as e:
+    print(f"Error general: {e}")
 
 # Llamada a la función con la cantidad de símbolos que deseas procesar (por ejemplo, 5)
 # porcentaje_minimo_requerido=50
